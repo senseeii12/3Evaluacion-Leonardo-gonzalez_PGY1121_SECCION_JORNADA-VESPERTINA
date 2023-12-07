@@ -2,10 +2,11 @@
 machine
 
 
-
 import datetime
 
-class CasaFeliz:
+
+    class CasaFeliz:
+    
     def __init__(self):
         self.departamentos_disponibles = [['A'] * 4, ['B'] * 4, ['C'] * 4, ['D'] * 4]
         self.departamentos_vendidos = [[''] * 4 for _ in range(4)]
