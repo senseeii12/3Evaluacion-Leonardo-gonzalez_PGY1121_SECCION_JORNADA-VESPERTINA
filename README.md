@@ -5,89 +5,88 @@ machine
 import datetime
 
 
-    class CasaFeliz:
-    
-    def __init__(self):
-        self.departamentos_disponibles = [['A'] * 4, ['B'] * 4, ['C'] * 4, ['D'] * 4]
-        self.departamentos_vendidos = [[''] * 4 for _ in range(4)]
-        self.compradores = {}
-        self.precios = {'A': 3800, 'B': 3000, 'C': 2800, 'D': 3500}
-        self.menu_principal()
+num_pisos = 10
+departamentos_por_piso = 4
+departamentos_disponibles = [['A' + str(p) for p in range(1, departamentos_por_piso + 1)] for _ in range(num_pisos)]
+departamentos_vendidos = [['' for _ in range(departamentos_por_piso)] for _ in range(num_pisos)]
+precios = {'A': 3800, 'B': 3000, 'C': 2800, 'D': 3500}
+compradores = {}
 
-    def menu_principal(self):
-        while True:
-            print("""\nMenú Principal
-            1. comprar departamento
-            2. Mostrar departamentos disponibles
-            3. Ver listado de compradores
-            4. Mostrar ganancias totales
-            5. Salir""")
-            opcion = input("Ingrese el número de la opción deseada: ")
+def mostrar_menu():
+    print("1. Comprar departamento")
+    print("2. Mostrar departamentos disponibles")
+    print("3. Ver listado de compradores")
+    print("4. Mostrar ganancias totales")
+    print("5. Salir")
 
-            if opcion == '1':
-                self.comprar_departamento()
-            elif opcion == '2':
-                self.mostrar_departamentos_disponibles()
-            elif opcion == '3':
-                self.ver_listado_compradores()
-            elif opcion == '4':
-                self.mostrar_ganancias_totales()
-            elif opcion == '5':
-                self.salir()
-                break
-            else:
-                print("Opción no válida. Intente de nuevo.")
+def comprar_departamento():
+    mostrar_departamentos()
+    try:
+        piso = int(input("Ingrese el número del piso: "))
+        tipo = input("Ingrese el tipo de departamento (A, B, C o D): ").upper()
+        run = input("Ingrese el RUN del comprador (sin guiones ni puntos): ")
 
-    def comprar_departamento(self):
-        piso = int(input("Ingrese el número del piso (1-10): "))
-        tipo = input("Ingrese el tipo de departamento (A, B, C, D): ").upper()
-
-        if piso < 1 or piso > 10 or tipo not in ['A', 'B', 'C', 'D']:
-            print("Datos ingresados no válidos. Intente de nuevo.")
+        if piso < 1 or piso > num_pisos or tipo not in precios:
+            print("Opción inválida. Intente nuevamente.")
             return
 
-        if (self).departamentos_vendidos[piso - 1][ord(tipo) - ord('A')] == 'X':
+        if departamentos_vendidos[piso - 1][ord(tipo) - ord('A')] == 'X':
             print("Departamento no disponible. Seleccione otro.")
-            return
+        else:
+            compradores[run] = (tipo, piso)
+            departamentos_vendidos[piso - 1][ord(tipo) - ord('A')] = 'X'
+            print("Operación realizada correctamente.")
+    except ValueError:
+        print("Error: Ingrese un valor numérico para el piso.")
 
-        run_comprador = input("Ingrese el RUN del comprador (sin guiones ni puntos): ")
-        if not run_comprador.isdigit():
-            print("RUN no válido. Intente de nuevo.")
-            return
+def mostrar_departamentos():
+    for i in range(num_pisos):
+        print(f"Piso {i + 1}:", end=' ')
+        for j in range(departamentos_por_piso):
+            if departamentos_vendidos[i][j] == 'X':
+                print(f"{departamentos_disponibles[i][j]} (Vendido)  ", end=' ')
+            else:
+                print(f"{departamentos_disponibles[i][j]} (Disponible)", end=' ')
+        print()
 
-        self.departamentos_vendidos[piso - 1][ord(tipo) - ord('A')] = 'X'
-        self.compradores[(piso, tipo)] = run_comprador
+def ver_listado_compradores():
+    for run, (tipo, piso) in sorted(compradores.items()):
+        print(f"RUN: {run}, Tipo: {tipo}, Piso: {piso}")
 
-        print("Operación realizada correctamente.")
+def mostrar_ganancias_totales():
+    total_por_tipo = {tipo: 0 for tipo in precios}
+    total_general = 0
 
-    def mostrar_departamentos_disponibles(self):
-        print("\nEstado actual de la venta de departamentos:")
-        for i, piso in enumerate(self.departamentos_disponibles, start=1):
-            print(f"Piso {i}:", end=" ")
-            for j, tipo in enumerate(piso, start=65):  # ASCII de 'A'
-                if self.departamentos_vendidos[i - 1][j - 65] == 'X':
-                    print(f"{chr(j)}X", end=" ")
-                else:
-                    print(chr(j), end=" ")
-            print()
+    for run, (tipo, _) in compradores.items():
+        total_por_tipo[tipo] += precios[tipo]
+        total_general += precios[tipo]
 
-    def ver_listado_compradores(self):
-        print("\nListado de compradores:")
-        for key in sorted(self.compradores.keys(), key=lambda x: (x[0], x[1])):
-            print(f"Piso {key[0]}, Tipo {key[1]}: {self.compradores[key]}")
+    print("Tipo de Departamento  Precio Unitario  Cantidad  Total")
+    for tipo in precios:
+        cantidad = total_por_tipo[tipo] // precios[tipo]
+        total_tipo = cantidad * precios[tipo]
+        print(f"{tipo} {precios[tipo]} UF {cantidad} {total_tipo} UF")
 
-    def mostrar_ganancias_totales(self):
-        print("\nVentas totales:")
-        total_ventas = 0
-        for tipo in self.precios:
-            cantidad_vendidos = sum(row.count('X') for row in self.departamentos_vendidos)
-            total_tipo = cantidad_vendidos * self.precios[tipo]
-            total_ventas += total_tipo
-            print(f"Tipo {tipo} {self.precios[tipo]} UF {cantidad_vendidos} {total_tipo} UF")
-        print(f"TOTAL {sum(map(lambda x: x.count('X'), self.departamentos_vendidos))} {total_ventas} UF")
+    print(f"TOTAL {len(compradores)} {total_general} UF")
 
-    def salir(self):
-        fecha_actual = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"\nSaliendo del sistema. Nombre: [Tu Nombre], Apellido: [Tu Apellido], Fecha: {fecha_actual}")
 
-CasaFeliz()
+while True:
+    mostrar_menu()
+    opcion = input("Ingrese la opción deseada (1-5): ")
+
+    if opcion == '1':
+        comprar_departamento()
+    elif opcion == '2':
+        mostrar_departamentos()
+    elif opcion == '3':
+        ver_listado_compradores()
+    elif opcion == '4':
+        mostrar_ganancias_totales()
+    elif opcion == '5':
+        print("Saliendo del sistema. Gracias.")
+        print("Nombre: [Tu Nombre]")
+        print("Apellido: [Tu Apellido]")
+        print("Fecha: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        break
+    else:
+        print("Opción inválida. Intente nuevamente.")
